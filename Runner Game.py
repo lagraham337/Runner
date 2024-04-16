@@ -4,6 +4,8 @@ from sys import exit
 # Docs: https://www.pygame.org/docs/
 # Graphics: itch.io
 # Background autumn landscale park background from macrovector on freepik.com
+# front https://www.fontspace.com/senor-saturno-font-f5848
+# https://www.youtube.com/watch?v=AY9MnQ4x3zk
 
 pygame.init()
 
@@ -24,7 +26,7 @@ background_surface = pygame.image.load('./Projects/Runner/Assets/Graphics/backgr
 background_surface = pygame.transform.scale(background_surface, (800, 400))
 
 # text_surface = test_font.render(text, Antialiasing?, color)
-score_surface = font.render('My Game', False, 'White')
+score_surface = font.render('My Game', False, ('White'))
 score_rect = score_surface.get_rect(center=(400, 55))
 
 # snail surface
@@ -36,6 +38,9 @@ player_surf = pygame.image.load('./Projects/Runner/Assets/Graphics/player_walk_1
 # player_rect = pygame.Rect(left, top, width, height)
 player_rect = player_surf.get_rect(midbottom=(80, 337))
 
+# gravity
+player_gravity = 0
+
 # while loop keeps the screen open
 while True:
     # event loop checking for all types of player input
@@ -46,6 +51,14 @@ while True:
             pygame.quit()
             # using exit from sys import exit breaks out of the loop
             exit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if player_rect.collidepoint(event.pos) and player_rect.bottom == 337:
+                player_gravity = -20
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and player_rect.bottom == 337:
+                player_gravity = -20
+        if event.type == pygame.KEYUP:
+            print('key up')
         # prints mouse position
         # if event.type == pygame.MOUSEMOTION:
         #     print(event.pos)
@@ -56,9 +69,6 @@ while True:
         # if event.type == pygame.MOUSEBUTTONDOWN:
         #     print('mouse down')
         # prints collision if collision with mouse
-        # if event.type == pygame.MOUSEMOTION:
-        #     if player_rect.collidepoint(event.pos):
-        #         print("collision")
 
 
     # draw all out elements
@@ -67,6 +77,10 @@ while True:
 
     # background
     screen.blit(background_surface, (0, 0))
+
+    # score
+    pygame.draw.rect(screen, '#5CA336', score_rect, 10, 20)
+    pygame.draw.rect(screen, '#5CA336', score_rect)
     screen.blit(score_surface, score_rect)
 
     # snail
@@ -76,7 +90,19 @@ while True:
     screen.blit(snail_surface, snail_rect)
 
     # player
+    player_gravity += 1
+    player_rect.y += player_gravity
     screen.blit(player_surf, player_rect)
+    if player_rect.bottom >= 337:
+        player_rect.bottom = 337
+        player_gravity = 0
+
+
+    # jump
+    # key dictionary
+    # keys = pygame.key.get_pressed()
+    # if keys[pygame.K_SPACE]:
+    #     print('jump')
 
     # collision
     # if player_rect.colliderect(snail_rect):
