@@ -36,6 +36,12 @@ def obstacle_movement(obstacle_list):
     else:
         return []
 
+def collisions(player, obstacles):
+    if obstacles:
+        for obstacle_rect in obstacles:
+            if player.colliderect(obstacle_rect): return False
+    return True
+
 game_active = False
 start_time = 0
 score = 0
@@ -66,8 +72,7 @@ instructions_rect = instructions_surf.get_rect(center = (400, 320))
 background_surface = pygame.image.load('./Assets/Graphics/background.jpg').convert()
 background_surface = pygame.transform.scale(background_surface, (800, 400))
 
-# obstacles 
-
+# OBSTACLES
 # fly surface
 fly_surface = pygame.image.load('./Assets/Graphics/fly1.png').convert_alpha()
 
@@ -146,6 +151,9 @@ while True:
 
         # obstacle movement
         obstacle_rect_list = obstacle_movement(obstacle_rect_list)
+
+        # collision
+        game_active = collisions(player_rect, obstacle_rect_list)
 
     else:
         # game menu screen
