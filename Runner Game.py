@@ -25,7 +25,12 @@ class Player(pygame.sprite.Sprite):
         player_walk_2 = pygame.image.load('./Assets/Graphics/player_walk_2.png').convert_alpha()
         self.player_walk = [player_walk_1, player_walk_2]
         self.player_index = 0
+        player_squat_1 = pygame.transform.scale(player_walk_1, (68, 65))
+        player_squat_2 = pygame.transform.scale(player_walk_2, (68, 65))
+        self.player_squat = [player_squat_1, player_squat_2]
         self.player_jump = pygame.image.load('./Assets/Graphics/jump.png').convert_alpha()
+        self.is_jumping = False
+        self.is_squatting = False
 
         self.image = self.player_walk[self.player_index]
         self.rect = self.image.get_rect(midbottom=(200, 337))
@@ -39,16 +44,34 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_SPACE] and self.rect.bottom >= 337:
             self.gravity = -20
             self.jump_sound.play()
+            self.is_jumping = True
+        else:
+            self.is_jumping = False
+        
+        if keys[pygame.K_s] and not self.is_jumping:
+            self.is_squatting = True
+        else:
+            self.is_squatting = False
 
     def apply_gravity(self):
         self.gravity += 1
         self.rect.y += self.gravity
         if self.rect.bottom >= 337:
             self.rect.bottom = 337
+            self.gravity = 0
 
     def animation_state(self):
-        if self.rect.bottom < 337:
+        if self.is_jumping:
             self.image = self.player_jump
+        elif self.is_squatting:
+            self.rect.y = 277
+            self.player_index += 0.1
+            if int(self.player_index) % 2 == 0:
+                self.image = self.player_squat[0]
+            else:
+                self.image = self.player_squat[1]
+            if self.player_index >= 2:
+                self.player_index = 0
         else:
             self.player_index += 0.1
             if int(self.player_index) % 2 == 0:
@@ -71,7 +94,7 @@ class Obstacle(pygame.sprite.Sprite):
             fly_1 = pygame.image.load('./Assets/Graphics/fly1.png').convert_alpha()
             fly_2 = pygame.image.load('./Assets/Graphics/fly2.png').convert_alpha()
             self.frames = [fly_1, fly_2]
-            y_pos = 250
+            y_pos = 270
         else:
             snail_1 = pygame.image.load('./Assets/Graphics/snail1.png').convert_alpha()
             snail_2 = pygame.image.load('./Assets/Graphics/snail2.png').convert_alpha()
@@ -143,7 +166,7 @@ title_surf = small_font.render('Snail Runner', False, 'White')
 title_rect = title_surf.get_rect(center=(400, 80))
 
 # instructions
-instructions_surf = small_font.render('Press spacebar to run', False, 'White')
+instructions_surf = small_font.render('Press spacebar to jump and S to duck', False, 'White')
 instructions_rect = instructions_surf.get_rect(center = (400, 320))
 
 # background suface
