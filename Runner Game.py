@@ -1,19 +1,22 @@
 import pygame
 from sys import exit
 from random import randint, choice
+import math
 
 # Docs: https://www.pygame.org/docs/
 # Graphics: itch.io
 # Background autumn landscale park background from macrovector on freepik.com
-# front https://www.fontspace.com/golden-avocado-sans-font-f114319 
+# font https://www.fontspace.com/golden-avocado-sans-font-f114319 
 # music by Spencer Y.K. from Pixabay
-# https://www.youtube.com/watch?v=AY9MnQ4x3zk 2:51:43
+# https://www.youtube.com/watch?v=AY9MnQ4x3zk
 
 pygame.init()
 
 # create display surface
 # screen = pygame.display.set_mode((width, height))
-screen = pygame.display.set_mode((800, 400))
+frame_height = 400
+frame_width = 800
+screen = pygame.display.set_mode((frame_width, frame_height))
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -25,7 +28,7 @@ class Player(pygame.sprite.Sprite):
         self.player_jump = pygame.image.load('./Assets/Graphics/jump.png').convert_alpha()
 
         self.image = self.player_walk[self.player_index]
-        self.rect = self.image.get_rect(midbottom=(100, 337))
+        self.rect = self.image.get_rect(midbottom=(200, 337))
         self.gravity = 0
 
         self.jump_sound = pygame.mixer.Sound('./Assets/Audio/jump.mp3')
@@ -146,6 +149,8 @@ instructions_rect = instructions_surf.get_rect(center = (400, 320))
 # background suface
 background_surface = pygame.image.load('./Assets/Graphics/background.jpg').convert()
 background_surface = pygame.transform.scale(background_surface, (800, 400))
+scroll = 0
+tiles = math.ceil(frame_width / background_surface.get_width()) + 1
 
 # snail iconn
 snail_frame_1 = pygame.image.load('./Assets/Graphics/snail1.png').convert_alpha()
@@ -182,14 +187,17 @@ while True:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 game_active = True
                 start_time = pygame.time.get_ticks()
-
-
     end_time = 0
-
     # draw all out elements
     if game_active:
-        # background
-        screen.blit(background_surface, (0, 0))
+        # scrolling background
+        i = 0
+        while i < tiles:
+            screen.blit(background_surface, (background_surface.get_width()*i + scroll, 0))
+            i += 1
+        scroll -= 3
+        if abs(scroll) > background_surface.get_width():
+            scroll = 0
 
         # score
         score = display_score()
