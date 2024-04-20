@@ -6,6 +6,7 @@ from random import randint, choice
 # Graphics: itch.io
 # Background autumn landscale park background from macrovector on freepik.com
 # front https://www.fontspace.com/golden-avocado-sans-font-f114319 
+# music by Spencer Y.K. from Pixabay
 # https://www.youtube.com/watch?v=AY9MnQ4x3zk 2:51:43
 
 pygame.init()
@@ -27,10 +28,14 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(midbottom=(100, 337))
         self.gravity = 0
 
+        self.jump_sound = pygame.mixer.Sound('./Assets/Audio/jump.mp3')
+        self.jump_sound.set_volume(.15)
+
     def player_input(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE] and self.rect.bottom >= 337:
             self.gravity = -20
+            self.jump_sound.play()
 
     def apply_gravity(self):
         self.gravity += 1
@@ -62,7 +67,7 @@ class Obstacle(pygame.sprite.Sprite):
         if type == 'fly':
             fly_1 = pygame.image.load('./Assets/Graphics/fly1.png').convert_alpha()
             fly_2 = pygame.image.load('./Assets/Graphics/fly2.png').convert_alpha()
-            self.frames = [fly_2, fly_2]
+            self.frames = [fly_1, fly_2]
             y_pos = 250
         else:
             snail_1 = pygame.image.load('./Assets/Graphics/snail1.png').convert_alpha()
@@ -73,8 +78,11 @@ class Obstacle(pygame.sprite.Sprite):
         self.image = self.frames[self.animation_index]
         self.rect = self.image.get_rect(midbottom = (randint(900, 1100), y_pos))
 
-    def animation_state(self):
-        self.animation_index += 0.1
+    def animation_state(self, type = 'snail'):
+        if type == 'fly':
+            self.animation_index += 0.3
+        else:
+            self.animation_index += 0.1
         if self.animation_index >= len(self.frames):
             self.animation_index = 0
         self.image = self.frames[int(self.animation_index)]
@@ -95,31 +103,6 @@ def display_score():
     screen.blit(score_surf, score_rect)
     return current_time
 
-# obstacles logic
-# 1. we create a list of obstacle rectangles
-# 2. everytime the timer triggers we add a new rectangle to that list.
-# 3. We move every rectangle in that list to the left on every frame.
-# 4. We delete rectangles too far left. 
-def obstacle_movement(obstacle_list):
-    if obstacle_list:
-        for obstacle_rect in obstacle_list:
-            obstacle_rect.x -= 5
-            if obstacle_rect.bottom == 337:
-                screen.blit(snail_surface, obstacle_rect)
-            else:
-                screen.blit(fly_surface, obstacle_rect)
-        # only copies existing item in list if obstacle is on the screen
-        obstacle_list = [obstacle for obstacle in obstacle_list if obstacle.x > -100]
-        return obstacle_list
-    else:
-        return []
-
-def collisions(player, obstacles):
-    if obstacles:
-        for obstacle_rect in obstacles:
-            if player.colliderect(obstacle_rect): return False
-    return True
-
 def collision_sprite():
     #pygame.sprite.spritecollide(sprite,group,bool)
     # bool represents if we want sprite deleted in collision
@@ -129,29 +112,17 @@ def collision_sprite():
     else:
         return True
 
-def player_animation():
-    global player_surf, player_index
-    # display the jump surface when player is not on floor
-    if player_rect.bottom < 337:
-        player_surf = player_jump
-    # play walking animation if the player is on the floor
-    else:
-        player_index += 0.1
-        if int(player_index) % 2 == 0:
-            player_surf = player_walk[0]
-        else:
-            player_surf = player_walk[1]
-        if player_index >= 2:
-            player_index = 0
-
 game_active = False
 start_time = 0
 score = 0
+background_music = pygame.mixer.Sound('./Assets/Audio/little_slime.mp3')
+background_music.set_volume(.5)
+# music
+background_music.play(loops = -1)
 
 # Groups
 player = pygame.sprite.GroupSingle()
 player.add(Player())
-
 obstacle_group = pygame.sprite.Group()
 
 # title. Could also set icon with pygame.display.set_icon('img.jpg')
@@ -176,34 +147,9 @@ instructions_rect = instructions_surf.get_rect(center = (400, 320))
 background_surface = pygame.image.load('./Assets/Graphics/background.jpg').convert()
 background_surface = pygame.transform.scale(background_surface, (800, 400))
 
-# OBSTACLES
-# fly surface
-fly_frame_1 = pygame.image.load('./Assets/Graphics/fly1.png').convert_alpha()
-fly_frame_2 = pygame.image.load('./Assets/Graphics/fly2.png').convert_alpha()
-fly_frames = [fly_frame_1, fly_frame_2]
-fly_frame_index = 0
-fly_surface = fly_frames[fly_frame_index] 
-
-# snail surface
+# snail iconn
 snail_frame_1 = pygame.image.load('./Assets/Graphics/snail1.png').convert_alpha()
-snail_frame_2 = pygame.image.load('./Assets/Graphics/snail2.png').convert_alpha()
-snail_frames = [snail_frame_1, snail_frame_2]
-snail_frame_index = 0
-snail_surface = snail_frames[snail_frame_index]
-
 pygame.display.set_icon(snail_frame_1)
-
-obstacle_rect_list = []
-
-# player surface
-player_walk_1 = pygame.image.load('./Assets/Graphics/player_walk_1.png').convert_alpha()
-player_walk_2 = pygame.image.load('./Assets/Graphics/player_walk_2.png').convert_alpha()
-player_walk = [player_walk_1, player_walk_2]
-player_index = 0
-player_jump = pygame.image.load('./Assets/Graphics/jump.png').convert_alpha()
-
-player_surf = player_walk[player_index]
-player_rect = player_surf.get_rect(midbottom=(80, 337))
 
 # starting/ending screen
 player_stand = pygame.image.load('./Assets/Graphics/player_stand.png').convert_alpha()
@@ -218,12 +164,6 @@ player_gravity = 0
 obstacle_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(obstacle_timer, 1500)
 
-snail_animation_timer = pygame.USEREVENT + 2
-pygame.time.set_timer(snail_animation_timer, 250)
-
-fly_animation_timer = pygame.USEREVENT + 3
-pygame.time.set_timer(fly_animation_timer, 80)
-
 # while loop keeps the screen open
 while True:
     # event loop checking for all types of player input
@@ -235,34 +175,12 @@ while True:
             # using exit from sys import exit breaks out of the loop
             exit()
         if game_active:
-            # click on player to jump if player is on the floor
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if player_rect.collidepoint(event.pos) and player_rect.bottom == 337:
-                    player_gravity = -20
-            # space bar to jump if player is on the floor
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and player_rect.bottom == 337:
-                    player_gravity = -20
             if event.type == obstacle_timer:
-                obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail'])))
-            if event.type == snail_animation_timer:
-                if snail_frame_index == 0:
-                    snail_frame_index = 1
-                else:
-                    snail_frame_index = 0
-                snail_surface = snail_frames[snail_frame_index]
-            if event.type == fly_animation_timer:
-                if fly_frame_index == 0:
-                    fly_frame_index = 1
-                else:
-                    fly_frame_index = 0
-                fly_surface = fly_frames[fly_frame_index]
-                    
+                obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail'])))    
         else:
             # restart game if space is pressed
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 game_active = True
-                #snail_rect.left = 800
                 start_time = pygame.time.get_ticks()
 
 
@@ -276,6 +194,7 @@ while True:
         # score
         score = display_score()
 
+        # draw player and obstacles
         player.draw(screen)
         player.update()
         obstacle_group.draw(screen)
@@ -289,9 +208,6 @@ while True:
         screen.fill((94, 129, 162))
         screen.blit(player_stand, player_stand_rect)
         screen.blit(title_surf, title_rect)
-        obstacle_rect_list.clear()
-        player_rect.midbottom = (80, 337)
-        player_gravity = 0
         if score == 0:
             screen.blit(instructions_surf, instructions_rect)
         else:
