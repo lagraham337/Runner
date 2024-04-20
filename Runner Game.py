@@ -1,6 +1,6 @@
 import pygame
 from sys import exit
-from random import randint
+from random import randint, choice
 
 # Docs: https://www.pygame.org/docs/
 # Graphics: itch.io
@@ -9,6 +9,84 @@ from random import randint
 # https://www.youtube.com/watch?v=AY9MnQ4x3zk 2:51:43
 
 pygame.init()
+
+# create display surface
+# screen = pygame.display.set_mode((width, height))
+screen = pygame.display.set_mode((800, 400))
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        player_walk_1 = pygame.image.load('./Assets/Graphics/player_walk_1.png').convert_alpha()
+        player_walk_2 = pygame.image.load('./Assets/Graphics/player_walk_2.png').convert_alpha()
+        self.player_walk = [player_walk_1, player_walk_2]
+        self.player_index = 0
+        self.player_jump = pygame.image.load('./Assets/Graphics/jump.png').convert_alpha()
+
+        self.image = self.player_walk[self.player_index]
+        self.rect = self.image.get_rect(midbottom=(100, 337))
+        self.gravity = 0
+
+    def player_input(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE] and self.rect.bottom >= 337:
+            self.gravity = -20
+
+    def apply_gravity(self):
+        self.gravity += 1
+        self.rect.y += self.gravity
+        if self.rect.bottom >= 337:
+            self.rect.bottom = 337
+
+    def animation_state(self):
+        if self.rect.bottom < 337:
+            self.image = self.player_jump
+        else:
+            self.player_index += 0.1
+            if int(self.player_index) % 2 == 0:
+                self.image = self.player_walk[0]
+            else:
+                self.image = self.player_walk[1]
+            if self.player_index >= 2:
+                self.player_index = 0
+
+    def update(self):
+        self.player_input()
+        self.apply_gravity()
+        self.animation_state()
+
+class Obstacle(pygame.sprite.Sprite):
+    def __init__(self, type):
+        super().__init__()
+
+        if type == 'fly':
+            fly_1 = pygame.image.load('./Assets/Graphics/fly1.png').convert_alpha()
+            fly_2 = pygame.image.load('./Assets/Graphics/fly2.png').convert_alpha()
+            self.frames = [fly_2, fly_2]
+            y_pos = 250
+        else:
+            snail_1 = pygame.image.load('./Assets/Graphics/snail1.png').convert_alpha()
+            snail_2 = pygame.image.load('./Assets/Graphics/snail2.png').convert_alpha()
+            self.frames = [snail_1, snail_2]
+            y_pos = 337
+        self.animation_index = 0
+        self.image = self.frames[self.animation_index]
+        self.rect = self.image.get_rect(midbottom = (randint(900, 1100), y_pos))
+
+    def animation_state(self):
+        self.animation_index += 0.1
+        if self.animation_index >= len(self.frames):
+            self.animation_index = 0
+        self.image = self.frames[int(self.animation_index)]
+
+    def update(self):
+        self.animation_state()
+        self.rect.x -= 6
+        self.destroy()
+
+    def destroy(self):
+        if self.rect.x <= -100:
+            self.kill()
 
 def display_score():
     current_time = (pygame.time.get_ticks() - start_time) // 1000
@@ -42,6 +120,15 @@ def collisions(player, obstacles):
             if player.colliderect(obstacle_rect): return False
     return True
 
+def collision_sprite():
+    #pygame.sprite.spritecollide(sprite,group,bool)
+    # bool represents if we want sprite deleted in collision
+    if pygame.sprite.spritecollide(player.sprite,obstacle_group,False):
+        obstacle_group.empty()
+        return False
+    else:
+        return True
+
 def player_animation():
     global player_surf, player_index
     # display the jump surface when player is not on floor
@@ -61,9 +148,11 @@ game_active = False
 start_time = 0
 score = 0
 
-# create display surface
-# screen = pygame.display.set_mode((width, height))
-screen = pygame.display.set_mode((800, 400))
+# Groups
+player = pygame.sprite.GroupSingle()
+player.add(Player())
+
+obstacle_group = pygame.sprite.Group()
 
 # title. Could also set icon with pygame.display.set_icon('img.jpg')
 pygame.display.set_caption('Snail Runner')
@@ -112,7 +201,7 @@ player_walk_2 = pygame.image.load('./Assets/Graphics/player_walk_2.png').convert
 player_walk = [player_walk_1, player_walk_2]
 player_index = 0
 player_jump = pygame.image.load('./Assets/Graphics/jump.png').convert_alpha()
-# player_rect = pygame.Rect(left, top, width, height)
+
 player_surf = player_walk[player_index]
 player_rect = player_surf.get_rect(midbottom=(80, 337))
 
@@ -155,10 +244,7 @@ while True:
                 if event.key == pygame.K_SPACE and player_rect.bottom == 337:
                     player_gravity = -20
             if event.type == obstacle_timer:
-                if randint(0,2):
-                    obstacle_rect_list.append(snail_surface.get_rect(bottomright=(randint(900, 1100), 337)))
-                else:
-                    obstacle_rect_list.append(fly_surface.get_rect(bottomright=(randint(900, 1100), 250)))
+                obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail'])))
             if event.type == snail_animation_timer:
                 if snail_frame_index == 0:
                     snail_frame_index = 1
@@ -190,20 +276,13 @@ while True:
         # score
         score = display_score()
 
-        # player
-        player_gravity += 1
-        player_rect.y += player_gravity
-        player_animation()
-        screen.blit(player_surf, player_rect)
-        if player_rect.bottom >= 337:
-            player_rect.bottom = 337
-            player_gravity = 0
-
-        # obstacle movement
-        obstacle_rect_list = obstacle_movement(obstacle_rect_list)
+        player.draw(screen)
+        player.update()
+        obstacle_group.draw(screen)
+        obstacle_group.update()
 
         # collision
-        game_active = collisions(player_rect, obstacle_rect_list)
+        game_active = collision_sprite()
 
     else:
         # game menu screen
