@@ -38,6 +38,8 @@ class Player(pygame.sprite.Sprite):
 
         self.jump_sound = pygame.mixer.Sound('./Assets/Audio/jump.mp3')
         self.jump_sound.set_volume(.15)
+        self.squat_sound = pygame.mixer.Sound('./Assets/Audio/whoosh.mp3')
+        self.squat_sound.set_volume(.15)
 
     def player_input(self):
         keys = pygame.key.get_pressed()
@@ -49,6 +51,7 @@ class Player(pygame.sprite.Sprite):
             self.is_jumping = False
         
         if keys[pygame.K_s] and not self.is_jumping:
+            #self.squat_sound.play()
             self.is_squatting = True
         else:
             self.is_squatting = False
@@ -118,7 +121,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.rect.x -= 6
         self.destroy()
 
-    def destroy(self):
+    def destroy(self):                          
         if self.rect.x <= -100:
             self.kill()
 
