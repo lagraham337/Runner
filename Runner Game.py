@@ -43,14 +43,14 @@ class Player(pygame.sprite.Sprite):
 
     def player_input(self):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE] and self.rect.bottom >= 337:
+        if keys[pygame.K_SPACE] and self.rect.bottom >= 337 and keys[pygame.K_s] is False:
             self.gravity = -20
             self.jump_sound.play()
             self.is_jumping = True
         else:
             self.is_jumping = False
         
-        if keys[pygame.K_s] and not self.is_jumping:
+        if keys[pygame.K_s] and not self.is_jumping and keys[pygame.K_SPACE] is False and self.rect.bottom >= 337:
             #self.squat_sound.play()
             self.is_squatting = True
         else:
