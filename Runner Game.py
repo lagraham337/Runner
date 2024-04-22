@@ -68,7 +68,7 @@ class Player(pygame.sprite.Sprite):
             self.image = self.player_jump
         elif self.is_squatting:
             self.rect.y = 277
-            self.player_index += 0.1
+            self.player_index += 0.175
             if int(self.player_index) % 2 == 0:
                 self.image = self.player_squat[0]
             else:
@@ -76,7 +76,7 @@ class Player(pygame.sprite.Sprite):
             if self.player_index >= 2:
                 self.player_index = 0
         else:
-            self.player_index += 0.1
+            self.player_index += 0.175
             if int(self.player_index) % 2 == 0:
                 self.image = self.player_walk[0]
             else:
@@ -97,18 +97,20 @@ class Obstacle(pygame.sprite.Sprite):
             fly_1 = pygame.image.load('./Assets/Graphics/fly1.png').convert_alpha()
             fly_2 = pygame.image.load('./Assets/Graphics/fly2.png').convert_alpha()
             self.frames = [fly_1, fly_2]
+            self.type = 'fly'
             y_pos = 270
         else:
             snail_1 = pygame.image.load('./Assets/Graphics/snail1.png').convert_alpha()
             snail_2 = pygame.image.load('./Assets/Graphics/snail2.png').convert_alpha()
             self.frames = [snail_1, snail_2]
+            self.type = 'snail'
             y_pos = 337
         self.animation_index = 0
         self.image = self.frames[self.animation_index]
-        self.rect = self.image.get_rect(midbottom = (randint(900, 1200), y_pos))
+        self.rect = self.image.get_rect(midbottom = (randint(900, 1300), y_pos))
 
-    def animation_state(self, type = 'snail'):
-        if type == 'fly':
+    def animation_state(self):
+        if self.type == 'fly':
             self.animation_index += 0.3
         else:
             self.animation_index += 0.1
@@ -221,7 +223,7 @@ while True:
         while i < tiles:
             screen.blit(background_surface, (background_surface.get_width()*i + scroll, 0))
             i += 1
-        scroll -= 3
+        scroll -= 4
         if abs(scroll) > background_surface.get_width():
             scroll = 0
 
